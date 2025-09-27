@@ -1,11 +1,4 @@
-import {
-  SignInButton,
-  SignUpButton,
-  SignedIn,
-  SignedOut,
-  UserButton,
-} from "@clerk/nextjs";
-import { DatabaseTestComponent } from "./DatabaseTestComponent";
+import { SignInButton, SignUpButton, SignedIn, SignedOut } from "@clerk/nextjs";
 
 const Dashboard = () => {
   return (
@@ -14,17 +7,17 @@ const Dashboard = () => {
         <div className="container mx-auto p-6">
           <div className="flex justify-between items-center mb-8">
             <h1 className="text-3xl font-bold">Dashboard</h1>
-            <UserButton />
           </div>
 
           <div className="grid gap-6">
             <div className="bg-white rounded-lg shadow-md p-6">
-              <h2 className="text-xl font-semibold mb-4">Database Testing</h2>
+              <h2 className="text-xl text-black font-semibold mb-4">
+                Database Testing
+              </h2>
               <p className="text-black mb-4">
                 Test your database connection and operations to ensure
                 everything is working correctly.
               </p>
-              <DatabaseTestComponent />
             </div>
           </div>
         </div>
