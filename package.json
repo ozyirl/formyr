@@ -10,7 +10,10 @@
   },
   "dependencies": {
     "@clerk/nextjs": "^6.33.0",
+    "@supabase/supabase-js": "^2.58.0",
+    "drizzle-orm": "^0.44.5",
     "next": "15.5.4",
+    "postgres": "^3.4.7",
     "react": "19.1.0",
     "react-dom": "19.1.0"
   },
