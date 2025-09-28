@@ -12,7 +12,7 @@ import { usePathname } from "next/navigation";
 export default function FloatingDockClient() {
   const pathname = usePathname();
 
-  if (pathname?.startsWith("/f/") || pathname?.startsWith("/form")) {
+  if (pathname?.startsWith("/form/") || pathname?.startsWith("/form")) {
     return null;
   }
   const links = [
@@ -36,13 +36,6 @@ export default function FloatingDockClient() {
         <IconChartHistogram className="h-full w-full text-muted-foreground transition-colors" />
       ),
       href: "/analytics",
-    },
-    {
-      title: "Profile",
-      icon: (
-        <IconUserCircle className="h-full w-full text-muted-foreground transition-colors" />
-      ),
-      href: "/profile",
     },
   ];
 

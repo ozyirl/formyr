@@ -2,6 +2,7 @@
 
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import { PureMultimodalInput } from "@/components/multimodal-ai-chat-input";
+import { useRouter } from "next/navigation";
 type VisibilityType = "public" | "private" | "unlisted" | string;
 
 interface Attachment {
@@ -58,6 +59,7 @@ export default function PureMultimodalInputOnlyDisplay() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const [useStreaming, setUseStreaming] = useState(true);
+  const router = useRouter();
 
   // Smooth scroll to bottom
   const scrollToBottom = () => {
@@ -114,6 +116,7 @@ export default function PureMultimodalInputOnlyDisplay() {
   const handleStreamingResponse = useCallback(
     async (contextualMessage: string, aiMessageId: string) => {
       try {
+        console.log("🚀 Starting streaming request...");
         const response = await fetch("/api/response/stream", {
           method: "POST",
           headers: {
@@ -126,8 +129,15 @@ export default function PureMultimodalInputOnlyDisplay() {
         });
 
         if (!response.ok) {
+          console.error(
+            "❌ Streaming response not OK:",
+            response.status,
+            response.statusText
+          );
           throw new Error(`HTTP error! status: ${response.status}`);
         }
+
+        console.log("✅ Streaming response OK, starting to read...");
 
         const reader = response.body?.getReader();
         const decoder = new TextDecoder();
@@ -153,6 +163,7 @@ export default function PureMultimodalInputOnlyDisplay() {
 
                   if (data.type === "text") {
                     accumulatedText += data.content;
+                    console.log("📝 Received text chunk:", data.content);
 
                     // Update message with streaming content
                     setMessages((prev) =>
@@ -169,18 +180,59 @@ export default function PureMultimodalInputOnlyDisplay() {
                     );
                   } else if (data.type === "tool_result") {
                     // Handle tool results (form creation)
+                    console.log("🛠️ Received tool result:", data.content);
                     const toolResult = data.content;
-                    if (toolResult?.output?.success) {
-                      const output = toolResult.output;
-                      if (output.type === "form_created" && output.formUrl) {
-                        setResponse(
-                          `Form created successfully! You can access it at: ${output.formUrl}`
-                        );
-                      }
+
+                    // Check if a form was successfully created and redirect
+                    if (
+                      toolResult?.toolName === "createForm" &&
+                      (toolResult.result?.success || toolResult.output?.success)
+                    ) {
+                      console.log(
+                        "✅ Form created successfully, redirecting to dashboard..."
+                      );
+                      setTimeout(() => {
+                        router.push("/dashboard");
+                      }, 2000); // Small delay to let user see the success message
                     }
+                  } else if (data.type === "error") {
+                    // Handle streaming errors
+                    console.error("❌ Streaming error:", data.content);
+                    accumulatedText = data.content;
+                    setMessages((prev) =>
+                      prev.map((msg) =>
+                        msg.id === aiMessageId
+                          ? {
+                              ...msg,
+                              content: accumulatedText,
+                              displayedContent: accumulatedText,
+                              isTyping: false,
+                            }
+                          : msg
+                      )
+                    );
                   } else if (data.type === "complete") {
                     // Streaming complete
-                    console.log("✅ Streaming completed");
+                    console.log(
+                      "✅ Streaming completed with text:",
+                      data.fullText
+                    );
+
+                    // Ensure final message is set correctly
+                    if (data.fullText && data.fullText !== accumulatedText) {
+                      setMessages((prev) =>
+                        prev.map((msg) =>
+                          msg.id === aiMessageId
+                            ? {
+                                ...msg,
+                                content: data.fullText,
+                                displayedContent: data.fullText,
+                                isTyping: false,
+                              }
+                            : msg
+                        )
+                      );
+                    }
                   }
                 } catch (e) {
                   console.error("Error parsing streaming data:", e);
@@ -196,7 +248,7 @@ export default function PureMultimodalInputOnlyDisplay() {
       }
       return true;
     },
-    [sessionId]
+    [sessionId, router]
   );
 
   const handleSendMessage = useCallback(
@@ -296,16 +348,21 @@ export default function PureMultimodalInputOnlyDisplay() {
             animateTyping(aiMessageId, data.message);
           }, 500); // Small delay for better UX
 
+          // Handle form creation and redirect
           if (data.type === "form_created" && data.formUrl) {
-            setResponse(
-              `Form created successfully! You can access it at: ${data.formUrl}`
+            console.log(
+              "✅ Form created successfully, redirecting to dashboard..."
             );
+            setResponse("Form created! Redirecting to dashboard...");
+            setTimeout(() => {
+              router.push("/dashboard");
+            }, 2000);
           } else if (data.type === "form_created_with_error") {
             setResponse(
               `Form created but with errors: ${data.error || "Unknown error"}`
             );
           } else {
-            setResponse(data.message);
+            setResponse("");
           }
         }
       } catch (error) {
@@ -337,7 +394,14 @@ export default function PureMultimodalInputOnlyDisplay() {
         setIsGenerating(false);
       }
     },
-    [sessionId, messages, animateTyping, useStreaming, handleStreamingResponse]
+    [
+      sessionId,
+      messages,
+      animateTyping,
+      useStreaming,
+      handleStreamingResponse,
+      router,
+    ]
   );
 
   const handleStopGenerating = useCallback(() => {
