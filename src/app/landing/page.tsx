@@ -73,8 +73,9 @@ const Landing = () => {
                 </div>
                 <div className="rounded-2xl bg-muted p-3 max-w-xs">
                   <p className="text-sm">
-                    Hi! I&apos;d love to learn about your project. What&apos;s
-                    the name of your startup?
+                    I&apos;ll help you fill out this application form!
+                    Let&apos;s start with your company name - what should I put
+                    down?
                   </p>
                 </div>
               </div>
@@ -83,8 +84,7 @@ const Landing = () => {
               <div className="flex gap-3 justify-end">
                 <div className="rounded-2xl bg-primary p-3 max-w-xs">
                   <p className="text-sm text-primary-foreground">
-                    It&apos;s called &quot;FormFlow&quot; - we&apos;re building
-                    the future of data collection!
+                    Put down &quot;FormFlow&quot; as the company name
                   </p>
                 </div>
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted">
@@ -99,8 +99,8 @@ const Landing = () => {
                 </div>
                 <div className="rounded-2xl bg-muted p-3 max-w-xs">
                   <p className="text-sm">
-                    That sounds exciting! What&apos;s the biggest challenge
-                    you&apos;re trying to solve in data collection?
+                    Got it! FormFlow is now filled in. Next, they&apos;re asking
+                    for your industry - what sector are you in?
                   </p>
                 </div>
               </div>
