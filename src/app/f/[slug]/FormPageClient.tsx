@@ -42,7 +42,7 @@ export default function FormPageClient({ form, slug }: FormPageClientProps) {
   const deployedUrl =
     process.env.NEXT_PUBLIC_DEPLOYED_URL ||
     process.env.DEPLOYED_URL ||
-    "https://mlh-frontend.vercel.app";
+    "https://formyr.vercel.app";
   const formUrl = `${deployedUrl}/form/${slug}`;
 
   const handleCopyUrl = async () => {
