@@ -14,6 +14,7 @@ import {
   UserButton,
 } from "@clerk/nextjs";
 import { ModeToggle } from "../mode-toggle";
+import Link from "next/link";
 
 export function Navbar() {
   const [open, setOpen] = React.useState(false);
@@ -23,7 +24,9 @@ export function Navbar() {
       <nav className="flex h-14 w-full items-center justify-between px-4">
         <div className="flex items-center gap-2">
           <Grid2x2PlusIcon className="size-6" />
-          <p className="font-mono text-lg font-bold">Formyr</p>
+          <Link href="/dashboard">
+            <p className="font-mono text-lg font-bold">Formyr</p>
+          </Link>
         </div>
         <div className="hidden items-center gap-2 lg:flex">
           <h1 className={buttonVariants({ variant: "ghost" })}>Github</h1>
