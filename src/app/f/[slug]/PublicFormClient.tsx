@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-
+import { AIChatInput } from "@/components/ui/ai-chat-input";
 interface PublicFormClientProps {
   slug: string;
 }
@@ -141,45 +141,7 @@ export default function PublicFormClient({ slug }: PublicFormClientProps) {
         </div>
       </div>
 
-      {/* Content Area - Blank Shell for Now */}
-      <div className="max-w-4xl mx-auto px-6 py-8">
-        <div className="bg-white dark:bg-zinc-950 rounded-lg border border-gray-200 dark:border-gray-700 p-8">
-          <div className="text-center">
-            <div className="text-gray-400 dark:text-gray-500 mb-4">
-              <svg
-                className="mx-auto h-16 w-16"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1}
-                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                />
-              </svg>
-            </div>
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
-              Form Shell Ready
-            </h2>
-            <p className="text-gray-600 dark:text-gray-400 mb-4">
-              Successfully loaded form &quot;{form.title}&quot; with slug:{" "}
-              <code className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded text-sm">
-                {slug}
-              </code>
-            </p>
-            <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 text-left">
-              <h3 className="font-medium text-gray-900 dark:text-gray-100 mb-2">
-                Form Data:
-              </h3>
-              <pre className="text-xs text-gray-600 dark:text-gray-400 overflow-x-auto">
-                {JSON.stringify(form, null, 2)}
-              </pre>
-            </div>
-          </div>
-        </div>
-      </div>
+      <AIChatInput />
     </div>
   );
 }

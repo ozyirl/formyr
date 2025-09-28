@@ -12,7 +12,7 @@ import { usePathname } from "next/navigation";
 export default function FloatingDockClient() {
   const pathname = usePathname();
 
-  if (pathname?.startsWith("/f/")) {
+  if (pathname?.startsWith("/f/") || pathname?.startsWith("/form")) {
     return null;
   }
   const links = [

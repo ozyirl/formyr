@@ -24,7 +24,7 @@ interface FormSchema {
 interface FormData {
   id: number;
   title: string;
-  schemaJson: unknown; // This comes from the database as unknown
+  schemaJson: unknown;
 }
 
 interface FormPageClientProps {
