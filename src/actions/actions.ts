@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/db";
-import { forms } from "@/db/schema";
+import { forms, chatSessions, chatMessages } from "@/db/schema";
 import { auth } from "@clerk/nextjs/server";
 import { eq } from "drizzle-orm";
 import { desc } from "drizzle-orm";
@@ -28,6 +28,19 @@ export interface FormData {
   }>;
   submitText: string;
   successMessage: string;
+}
+
+export interface ChatSessionData {
+  userId: string;
+  formId?: number;
+  title?: string;
+}
+
+export interface ChatMessageData {
+  sessionId: number;
+  role: "user" | "assistant" | "system" | "tool";
+  content: string;
+  toolName?: string;
 }
 
 function generateSlug(title: string): string {
@@ -129,6 +142,87 @@ export async function getForms(userId?: string) {
       success: false,
       error: "Failed to fetch forms",
       forms: [],
+    };
+  }
+}
+
+export async function createChatSession(sessionData: ChatSessionData) {
+  try {
+    console.log("💬 createChatSession called with:", sessionData);
+
+    const [savedSession] = await db
+      .insert(chatSessions)
+      .values({
+        userId: sessionData.userId,
+        formId: sessionData.formId,
+        title: sessionData.title,
+      })
+      .returning();
+
+    console.log("✅ Chat session created:", savedSession);
+
+    return {
+      success: true,
+      session: savedSession,
+    };
+  } catch (error) {
+    console.error("Error creating chat session:", error);
+    return {
+      success: false,
+      error: "Failed to create chat session",
+    };
+  }
+}
+
+export async function saveChatMessage(messageData: ChatMessageData) {
+  try {
+    console.log("💬 saveChatMessage called with:", messageData);
+
+    const [savedMessage] = await db
+      .insert(chatMessages)
+      .values({
+        sessionId: messageData.sessionId,
+        role: messageData.role,
+        content: messageData.content,
+        toolName: messageData.toolName,
+      })
+      .returning();
+
+    console.log("✅ Chat message saved:", savedMessage);
+
+    return {
+      success: true,
+      message: savedMessage,
+    };
+  } catch (error) {
+    console.error("Error saving chat message:", error);
+    return {
+      success: false,
+      error: "Failed to save chat message",
+    };
+  }
+}
+
+export async function saveChatMessages(messages: ChatMessageData[]) {
+  try {
+    console.log("💬 saveChatMessages called with", messages.length, "messages");
+
+    const savedMessages = await db
+      .insert(chatMessages)
+      .values(messages)
+      .returning();
+
+    console.log("✅ Chat messages saved:", savedMessages.length, "messages");
+
+    return {
+      success: true,
+      messages: savedMessages,
+    };
+  } catch (error) {
+    console.error("Error saving chat messages:", error);
+    return {
+      success: false,
+      error: "Failed to save chat messages",
     };
   }
 }
