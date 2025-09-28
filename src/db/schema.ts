@@ -38,3 +38,13 @@ export const chatMessages = pgTable("chat_messages", {
   toolName: varchar("tool_name", { length: 64 }),
   createdAt: timestamp("created_at").defaultNow(),
 });
+
+export const submissions = pgTable("submissions", {
+  id: serial("id").primaryKey(),
+  formId: integer("form_id")
+    .notNull()
+    .references(() => forms.id, { onDelete: "cascade" }),
+  data: jsonb("data").notNull(), // stores the form submission data as JSON
+  submittedAt: timestamp("submitted_at").defaultNow(),
+  ipAddress: varchar("ip_address", { length: 45 }), // optional, for analytics
+});
