@@ -210,13 +210,16 @@ User request: ${message}`,
         }
 
         console.log("💾 Saving form to database...");
-        const saveResult = await saveForm({
-          title: formSchema.title,
-          description: formSchema.description,
-          fields: formSchema.fields,
-          submitText: formSchema.submitText,
-          successMessage: formSchema.successMessage,
-        } as FormData);
+        const saveResult = await saveForm(
+          {
+            title: formSchema.title,
+            description: formSchema.description,
+            fields: formSchema.fields,
+            submitText: formSchema.submitText,
+            successMessage: formSchema.successMessage,
+          } as FormData,
+          userId
+        );
 
         console.log("💾 Save Result:", saveResult);
 
