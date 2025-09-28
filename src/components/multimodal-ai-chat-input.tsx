@@ -187,24 +187,24 @@ interface SuggestedActionsProps {
 function PureSuggestedActions({ onSelectAction }: SuggestedActionsProps) {
 	const suggestedActions = [
 		{
-			title: "How can I improve",
-			label: "my time management skills?",
-			action: "How can I improve my time management skills?",
+			title: "Create a form for",
+			label: "collecting customer feedback",
+			action: "Create a form for collecting customer feedback",
 		},
 		{
-			title: "Suggest ideas for",
-			label: "a creative writing project",
-			action: "Suggest ideas for a creative writing project",
+			title: "Generate a survey",
+			label: "for employee satisfaction",
+			action: "Generate a survey for employee satisfaction",
 		},
 		{
-			title: "What are some tips",
-			label: "for staying motivated?",
-			action: "What are some tips for staying motivated?",
+			title: "Build a registration form",
+			label: "for an online event",
+			action: "Build a registration form for an online event",
 		},
 		{
-			title: "Help me brainstorm",
-			label: "ideas for a new hobby",
-			action: "Help me brainstorm ideas for a new hobby",
+			title: "Design a quiz",
+			label: "to test product knowledge",
+			action: "Design a quiz to test product knowledge",
 		},
 	];
 
