@@ -44,7 +44,7 @@ export const submissions = pgTable("submissions", {
   formId: integer("form_id")
     .notNull()
     .references(() => forms.id, { onDelete: "cascade" }),
-  data: jsonb("data").notNull(), // stores the form submission data as JSON
+  data: jsonb("data").notNull(),
   submittedAt: timestamp("submitted_at").defaultNow(),
-  ipAddress: varchar("ip_address", { length: 45 }), // optional, for analytics
+  ipAddress: varchar("ip_address", { length: 45 }),
 });
