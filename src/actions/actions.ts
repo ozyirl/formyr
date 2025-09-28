@@ -3,8 +3,10 @@
 import { db } from "@/db";
 import { forms, chatSessions, chatMessages, submissions } from "@/db/schema";
 import { auth } from "@clerk/nextjs/server";
-import { eq, and } from "drizzle-orm";
+import { eq, and, inArray } from "drizzle-orm";
 import { desc } from "drizzle-orm";
+import { generateText } from "ai";
+import { google } from "@ai-sdk/google";
 
 export interface FormData {
   title: string;
@@ -515,6 +517,266 @@ export async function getFormResponses(formSlug: string, userId?: string) {
       error: "Failed to fetch responses",
       responses: [],
       form: null,
+    };
+  }
+}
+
+export interface SentimentAnalysis {
+  positive: number;
+  neutral: number;
+  negative: number;
+  averageScore: number;
+  totalResponses: number;
+}
+
+async function analyzeSentimentWithAI(text: string): Promise<{
+  score: number;
+  sentiment: "positive" | "neutral" | "negative";
+}> {
+  try {
+    const result = await generateText({
+      model: google("gemini-2.5-flash"),
+      prompt: `Analyze the sentiment of the following text and provide a response in JSON format:
+
+Text: "${text}"
+
+Please respond with ONLY a JSON object in this exact format:
+{
+  "sentiment": "positive" | "neutral" | "negative",
+  "score": number between -1 and 1,
+  "confidence": number between 0 and 1
+}
+
+Rules:
+- sentiment: "positive" for positive sentiment, "negative" for negative sentiment, "neutral" for neutral sentiment
+- score: -1 (very negative) to +1 (very positive), 0 for neutral
+- confidence: 0 (not confident) to 1 (very confident)
+
+Respond with ONLY the JSON object, no other text.`,
+    });
+
+    const jsonResponse = result.text.trim();
+    const parsed = JSON.parse(jsonResponse);
+
+    return {
+      score: parsed.score || 0,
+      sentiment: parsed.sentiment || "neutral",
+    };
+  } catch (error) {
+    console.error("Error analyzing sentiment with AI:", error);
+
+    return {
+      score: 0,
+      sentiment: "neutral",
+    };
+  }
+}
+
+export interface PopularForm {
+  id: number;
+  title: string;
+  slug: string;
+  submissionCount: number;
+  createdAt: Date | null;
+}
+
+export async function getMostPopularForm(userId?: string): Promise<{
+  success: boolean;
+  form?: PopularForm;
+  error?: string;
+}> {
+  try {
+    console.log("📊 getMostPopularForm called");
+
+    let currentUserId = userId;
+    if (!currentUserId) {
+      const { userId: authUserId } = await auth();
+      if (!authUserId) {
+        throw new Error("User not authenticated");
+      }
+      currentUserId = authUserId;
+    }
+
+    // Get all forms for the current user
+    const userForms = await db
+      .select({
+        id: forms.id,
+        title: forms.title,
+        slug: forms.slug,
+        createdAt: forms.createdAt,
+      })
+      .from(forms)
+      .where(eq(forms.userId, currentUserId))
+      .orderBy(desc(forms.createdAt));
+
+    if (userForms.length === 0) {
+      return {
+        success: true,
+        form: undefined,
+      };
+    }
+
+    // Get submission counts for each form
+    const formsWithSubmissionCounts = await Promise.all(
+      userForms.map(async (form) => {
+        const submissionCount = await db
+          .select()
+          .from(submissions)
+          .where(eq(submissions.formId, form.id));
+
+        return {
+          id: form.id,
+          title: form.title,
+          slug: form.slug,
+          createdAt: form.createdAt,
+          submissionCount: submissionCount.length,
+        };
+      })
+    );
+
+    // Find the form with the most submissions
+    const mostPopularForm = formsWithSubmissionCounts.reduce(
+      (prev, current) => {
+        return prev.submissionCount > current.submissionCount ? prev : current;
+      }
+    );
+
+    return {
+      success: true,
+      form: mostPopularForm,
+    };
+  } catch (error) {
+    console.error("Error getting most popular form:", error);
+    return {
+      success: false,
+      error: "Failed to get most popular form",
+    };
+  }
+}
+
+export async function getAllResponsesSentimentAnalysis(
+  userId?: string
+): Promise<{
+  success: boolean;
+  analysis?: SentimentAnalysis;
+  error?: string;
+}> {
+  try {
+    console.log("📊 getAllResponsesSentimentAnalysis called");
+
+    let currentUserId = userId;
+    if (!currentUserId) {
+      const { userId: authUserId } = await auth();
+      if (!authUserId) {
+        throw new Error("User not authenticated");
+      }
+      currentUserId = authUserId;
+    }
+
+    const userForms = await db
+      .select({ id: forms.id })
+      .from(forms)
+      .where(eq(forms.userId, currentUserId));
+
+    if (userForms.length === 0) {
+      return {
+        success: true,
+        analysis: {
+          positive: 0,
+          neutral: 0,
+          negative: 0,
+          averageScore: 0,
+          totalResponses: 0,
+        },
+      };
+    }
+
+    // Get all submissions for user's forms
+    const formIds = userForms.map((form) => form.id);
+    const allUserSubmissions = await db
+      .select({
+        id: submissions.id,
+        data: submissions.data,
+        formId: submissions.formId,
+      })
+      .from(submissions)
+      .where(inArray(submissions.formId, formIds));
+
+    if (allUserSubmissions.length === 0) {
+      return {
+        success: true,
+        analysis: {
+          positive: 0,
+          neutral: 0,
+          negative: 0,
+          averageScore: 0,
+          totalResponses: 0,
+        },
+      };
+    }
+
+    // Analyze sentiment for each submission using AI
+    let totalScore = 0;
+    let positive = 0;
+    let neutral = 0;
+    let negative = 0;
+
+    // Process submissions in batches to avoid overwhelming the AI API
+    const batchSize = 10;
+    for (let i = 0; i < allUserSubmissions.length; i += batchSize) {
+      const batch = allUserSubmissions.slice(i, i + batchSize);
+
+      const batchPromises = batch.map(async (submission) => {
+        // Extract text from submission data
+        const submissionData = submission.data as Record<string, unknown>;
+        const textFields = Object.values(submissionData)
+          .filter((value) => typeof value === "string" && value.length > 0)
+          .join(" ");
+
+        if (textFields.trim()) {
+          return await analyzeSentimentWithAI(textFields);
+        } else {
+          return { score: 0, sentiment: "neutral" as const };
+        }
+      });
+
+      const batchResults = await Promise.all(batchPromises);
+
+      for (const analysis of batchResults) {
+        totalScore += analysis.score;
+
+        switch (analysis.sentiment) {
+          case "positive":
+            positive++;
+            break;
+          case "negative":
+            negative++;
+            break;
+          default:
+            neutral++;
+            break;
+        }
+      }
+    }
+
+    const totalResponses = allUserSubmissions.length;
+    const averageScore = totalResponses > 0 ? totalScore / totalResponses : 0;
+
+    return {
+      success: true,
+      analysis: {
+        positive,
+        neutral,
+        negative,
+        averageScore,
+        totalResponses,
+      },
+    };
+  } catch (error) {
+    console.error("Error analyzing sentiment:", error);
+    return {
+      success: false,
+      error: "Failed to analyze sentiment",
     };
   }
 }
