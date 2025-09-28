@@ -1,6 +1,11 @@
 "use client";
 
-import { RedirectToSignIn, SignedIn, SignedOut } from "@clerk/nextjs";
+import {
+  RedirectToSignIn,
+  SignedIn,
+  SignedOut,
+  UserButton,
+} from "@clerk/nextjs";
 
 import { ModeToggle } from "@/components/mode-toggle";
 
@@ -13,6 +18,7 @@ const Profile = () => {
             <span className="text-lg font-semibold text-foreground">
               Profile
             </span>
+            <UserButton />
             <ModeToggle />
           </div>
         </SignedIn>

@@ -7,8 +7,14 @@ import {
   IconPlus,
   IconUserCircle,
 } from "@tabler/icons-react";
+import { usePathname } from "next/navigation";
 
 export default function FloatingDockClient() {
+  const pathname = usePathname();
+
+  if (pathname?.startsWith("/f/")) {
+    return null;
+  }
   const links = [
     {
       title: "Dashboard",
