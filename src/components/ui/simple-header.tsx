@@ -7,17 +7,16 @@ import { MenuToggle } from "@/components/ui/menu-toggle";
 
 import Image from "next/image";
 import {
-	SignedIn,
-	SignedOut,
-	SignInButton,
-	SignUpButton,
-	UserButton,
+  SignedIn,
+  SignedOut,
+  SignInButton,
+  SignUpButton,
+  UserButton,
 } from "@clerk/nextjs";
 import { ModeToggle } from "../mode-toggle";
 
 export function Navbar() {
-	const [open, setOpen] = React.useState(false);
-
+  const [open, setOpen] = React.useState(false);
 
   return (
     <header className="bg-background/95 supports-[backdrop-filter]:bg-background/80 sticky top-1/4 z-50 w-full border-b backdrop-blur-lg">
@@ -30,16 +29,17 @@ export function Navbar() {
           <h1 className={buttonVariants({ variant: "ghost" })}>Github</h1>
 
           <SignedOut>
-						<SignInButton mode="modal">
-							<Button variant="outline">Sign In</Button>
-						</SignInButton>
-						<SignUpButton mode="modal">
-							<Button>Get Started</Button>
-						</SignUpButton>
-					</SignedOut>
-					<SignedIn>
-						<UserButton />
-					</SignedIn>
+            <SignInButton mode="modal">
+              <Button variant="outline">Sign In</Button>
+            </SignInButton>
+            <SignUpButton mode="modal">
+              <Button>Get Started</Button>
+            </SignUpButton>
+          </SignedOut>
+          <SignedIn>
+            <ModeToggle />
+            <UserButton />
+          </SignedIn>
         </div>
         <Sheet open={open} onOpenChange={setOpen}>
           <Button size="icon" variant="outline" className="lg:hidden">
@@ -67,5 +67,4 @@ export function Navbar() {
       </nav>
     </header>
   );
-
 }
