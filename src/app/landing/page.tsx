@@ -1,6 +1,6 @@
 "use client";
 
-import { SignInButton, SignUpButton } from "@clerk/nextjs";
+import { SignUpButton } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
 import {
   ArrowRight,
@@ -10,11 +10,8 @@ import {
   Users,
   CheckCircle,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
 
 const Landing = () => {
-  const router = useRouter();
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/20">
       {/* Hero Section */}

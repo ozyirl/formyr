@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  SignedIn,
-  SignedOut,
-  UserButton,
-  RedirectToSignIn,
-} from "@clerk/nextjs";
+import { SignedIn, SignedOut } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import Landing from "./landing/page";
@@ -21,16 +16,14 @@ const RedirectToDashboard = () => {
 };
 
 export default function Home() {
-
-	return (
-		<>
-			<SignedIn>
-				<RedirectToDashboard />
-			</SignedIn>
-			<SignedOut>
-				<Landing />
-			</SignedOut>
-		</>
-	);
-
+  return (
+    <>
+      <SignedIn>
+        <RedirectToDashboard />
+      </SignedIn>
+      <SignedOut>
+        <Landing />
+      </SignedOut>
+    </>
+  );
 }

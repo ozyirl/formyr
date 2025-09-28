@@ -1,11 +1,10 @@
 "use client";
 import React from "react";
-import { Grid2x2PlusIcon, User } from "lucide-react";
+import { Grid2x2PlusIcon } from "lucide-react";
 import { Sheet, SheetContent, SheetFooter } from "@/components/ui/sheet";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { MenuToggle } from "@/components/ui/menu-toggle";
 
-import Image from "next/image";
 import {
   SignedIn,
   SignedOut,
