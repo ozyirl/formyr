@@ -455,3 +455,66 @@ export async function getFormSubmissions(formSlug: string, userId?: string) {
     };
   }
 }
+
+export async function getFormResponses(formSlug: string, userId?: string) {
+  try {
+    console.log("🔍 getFormResponses called with slug:", formSlug);
+    let currentUserId = userId;
+    if (!currentUserId) {
+      const { userId: authUserId } = await auth();
+      if (!authUserId) {
+        throw new Error("User not authenticated");
+      }
+      currentUserId = authUserId;
+    }
+
+    // First verify the form belongs to the current user and get form details
+    const [form] = await db
+      .select({
+        id: forms.id,
+        title: forms.title,
+        schemaJson: forms.schemaJson,
+      })
+      .from(forms)
+      .where(and(eq(forms.slug, formSlug), eq(forms.userId, currentUserId)));
+
+    if (!form) {
+      return {
+        success: false,
+        error: "Form not found or access denied",
+        responses: [],
+        form: null,
+      };
+    }
+
+    // Get all responses for this form
+    const formResponses = await db
+      .select({
+        id: submissions.id,
+        data: submissions.data,
+        submittedAt: submissions.submittedAt,
+        ipAddress: submissions.ipAddress,
+      })
+      .from(submissions)
+      .where(eq(submissions.formId, form.id))
+      .orderBy(desc(submissions.submittedAt));
+
+    return {
+      success: true,
+      responses: formResponses,
+      form: {
+        id: form.id,
+        title: form.title,
+        schema: form.schemaJson,
+      },
+    };
+  } catch (error) {
+    console.error("Error fetching form responses:", error);
+    return {
+      success: false,
+      error: "Failed to fetch responses",
+      responses: [],
+      form: null,
+    };
+  }
+}
