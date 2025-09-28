@@ -7,6 +7,7 @@ import {
   type FormData,
   createChatSession,
   saveChatMessage,
+  updateChatSessionWithForm,
 } from "@/actions/actions";
 import { auth } from "@clerk/nextjs/server";
 export async function POST(request: Request) {
@@ -279,8 +280,19 @@ User request: ${message}`,
 
           // Update session with form link if form was created
           if (saveResult.form?.id) {
-            // Note: We could update the session to link it to the form here if needed
             console.log("🔗 Form created with ID:", saveResult.form.id);
+            const updateResult = await updateChatSessionWithForm(
+              currentSessionId,
+              saveResult.form.id
+            );
+            if (updateResult.success) {
+              console.log("✅ Session successfully linked to form");
+            } else {
+              console.error(
+                "❌ Failed to link session to form:",
+                updateResult.error
+              );
+            }
           }
 
           return NextResponse.json({
