@@ -1,29 +1,27 @@
 "use client";
-import Image from "next/image";
+
 import {
-	ClerkProvider,
-	SignInButton,
-	SignUpButton,
-	SignedIn,
-	SignedOut,
-	UserButton,
-	RedirectToSignIn,
+  SignedIn,
+  SignedOut,
+  UserButton,
+  RedirectToSignIn,
 } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import Landing from "./landing/page";
 
 const RedirectToDashboard = () => {
-	const router = useRouter();
+  const router = useRouter();
 
-	useEffect(() => {
-		router.push("/dashboard"); // target page
-	}, [router]);
+  useEffect(() => {
+    router.push("/dashboard"); // target page
+  }, [router]);
 
-	return null; // render nothing
+  return null; // render nothing
 };
 
 export default function Home() {
+
 	return (
 		<>
 			<SignedIn>
@@ -34,4 +32,5 @@ export default function Home() {
 			</SignedOut>
 		</>
 	);
+
 }

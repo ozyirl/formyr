@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/db";
-import { forms, chatSessions, chatMessages } from "@/db/schema";
+import { forms, chatSessions, chatMessages, submissions } from "@/db/schema";
 import { auth } from "@clerk/nextjs/server";
 import { eq, and } from "drizzle-orm";
 import { desc } from "drizzle-orm";
@@ -401,6 +401,57 @@ export async function getChatMessagesByFormId(formId: number) {
       success: false,
       error: "Failed to fetch chat messages",
       messages: [],
+    };
+  }
+}
+
+export async function getFormSubmissions(formSlug: string, userId?: string) {
+  try {
+    let currentUserId = userId;
+    if (!currentUserId) {
+      const { userId: authUserId } = await auth();
+      if (!authUserId) {
+        throw new Error("User not authenticated");
+      }
+      currentUserId = authUserId;
+    }
+
+    // First verify the form belongs to the current user
+    const [form] = await db
+      .select({ id: forms.id })
+      .from(forms)
+      .where(and(eq(forms.slug, formSlug), eq(forms.userId, currentUserId)));
+
+    if (!form) {
+      return {
+        success: false,
+        error: "Form not found or access denied",
+        submissions: [],
+      };
+    }
+
+    // Get all submissions for this form
+    const formSubmissions = await db
+      .select({
+        id: submissions.id,
+        data: submissions.data,
+        submittedAt: submissions.submittedAt,
+        ipAddress: submissions.ipAddress,
+      })
+      .from(submissions)
+      .where(eq(submissions.formId, form.id))
+      .orderBy(desc(submissions.submittedAt));
+
+    return {
+      success: true,
+      submissions: formSubmissions,
+    };
+  } catch (error) {
+    console.error("Error fetching form submissions:", error);
+    return {
+      success: false,
+      error: "Failed to fetch submissions",
+      submissions: [],
     };
   }
 }

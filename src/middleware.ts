@@ -1,12 +1,27 @@
-import { clerkMiddleware } from "@clerk/nextjs/server";
+import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 
-export default clerkMiddleware();
+// Define public routes that don't require authentication
+const isPublic = createRouteMatcher([
+  "/", // landing page
+  "/f/(.*)", // public form pages with any slug
+  "/api/forms/(.*)", // all form API endpoints (GET schema, POST submit)
+  "/api/health-check", // health check endpoint
+  "/sign-in(.*)", // Clerk sign-in pages
+  "/sign-up(.*)", // Clerk sign-up pages
+]);
+
+export default clerkMiddleware(async (auth, req) => {
+  // Only protect non-public routes
+  if (!isPublic(req)) {
+    await auth.protect();
+  }
+});
 
 export const config = {
   matcher: [
-    // Skip Next.js internals and all static files, unless found in search params
-    "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
-    // Always run for API routes
-    "/(api|trpc)(.*)",
+    // Skip all paths with file extensions and _next
+    "/((?!.+\\.[\\w]+$|_next).*)",
+    "/", // include root
+    "/(api|trpc)(.*)", // include all API routes
   ],
 };
