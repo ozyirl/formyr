@@ -68,7 +68,7 @@ export async function POST(request: Request) {
 
 CONVERSATION FLOW:
 1. First, respond conversationally to understand what the user needs
-2. Ask clarifying questions if needed  
+2. Ask clarifying questions if needed IF NEEDED , DO not annoy the user, generate your own questions if needed  
 3. When you have enough information, use the createForm tool to create the form
 4. Explain what you've created in a friendly way
 
@@ -214,7 +214,6 @@ Be conversational, helpful, and only use tools when you have clear requirements!
             if (saveResult.success) {
               console.log("✅ Form saved successfully!");
 
-              // Update session with form link if form was created
               if (saveResult.form?.id) {
                 console.log("🔗 Form created with ID:", saveResult.form.id);
                 const updateResult = await updateChatSessionWithForm(
@@ -251,7 +250,7 @@ Be conversational, helpful, and only use tools when you have clear requirements!
           },
         }),
       },
-      toolChoice: "auto", // Let the AI decide when to use tools
+      toolChoice: "auto",
       onStepFinish({ text, toolCalls, toolResults, finishReason }) {
         console.log("🔄 Stream step finished:", {
           text: text?.substring(0, 100) + (text?.length > 100 ? "..." : ""),
@@ -268,7 +267,6 @@ Be conversational, helpful, and only use tools when you have clear requirements!
     const stream = new ReadableStream({
       async start(controller) {
         let fullText = "";
-        let toolResults: any[] = [];
 
         try {
           // Stream text as it comes
@@ -290,65 +288,17 @@ Be conversational, helpful, and only use tools when you have clear requirements!
 
           console.log("✅ Text streaming completed, full text:", fullText);
 
-          // Wait for the final result with tool calls
-          const finalResult = await result.response;
-          console.log("🔧 Final result:", {
-            text: finalResult.text,
-            toolResults: finalResult.toolResults?.length || 0,
-          });
+          // Wait for the final result and tool results
+          await result.response;
+          console.log("🔧 Final result received");
 
           // Handle tool results if any
-          if (finalResult.toolResults && finalResult.toolResults.length > 0) {
-            toolResults = finalResult.toolResults;
+          try {
+            const toolResults = await result.toolResults;
+            if (toolResults && toolResults.length > 0) {
+              const toolResult = toolResults[0];
 
-            for (const toolResult of toolResults) {
               console.log("🛠️ Processing tool result:", toolResult.toolName);
-              console.log(
-                "🔍 Full tool result structure:",
-                JSON.stringify(toolResult, null, 2)
-              );
-
-              // If this is a form creation result, append the full URL to the message
-              if (toolResult.toolName === "createForm") {
-                // Check different possible result structures
-                const result =
-                  toolResult.result || toolResult.output || toolResult;
-                console.log(
-                  "🔍 Extracted result:",
-                  JSON.stringify(result, null, 2)
-                );
-
-                if (result?.success && result?.formUrl) {
-                  const deployedUrl =
-                    process.env.DEPLOYED_URL ||
-                    process.env.NEXT_PUBLIC_URL ||
-                    "http://localhost:3000";
-                  const formUrl = result.formUrl;
-                  const fullUrl = `${deployedUrl}${formUrl}`;
-
-                  console.log("🌐 Full form URL:", fullUrl);
-
-                  // Append simple success message
-                  const urlMessage = `\n\n🎉 **Your form has been created successfully!** Redirecting to dashboard...`;
-
-                  // Stream the URL message
-                  for (const char of urlMessage) {
-                    controller.enqueue(
-                      encoder.encode(
-                        `data: ${JSON.stringify({
-                          type: "text",
-                          content: char,
-                          sessionId: currentSessionId,
-                        })}\n\n`
-                      )
-                    );
-                    // Small delay for typing effect
-                    await new Promise((resolve) => setTimeout(resolve, 20));
-                  }
-
-                  fullText += urlMessage;
-                }
-              }
 
               // Send tool result
               controller.enqueue(
@@ -361,11 +311,12 @@ Be conversational, helpful, and only use tools when you have clear requirements!
                 )
               );
             }
+          } catch {
+            console.log("No tool results available");
           }
 
           // Store AI response message
-          const messageToStore =
-            fullText || finalResult.text || "I've processed your request.";
+          const messageToStore = fullText || "I've processed your request.";
           await saveChatMessage({
             sessionId: currentSessionId,
             role: "assistant",
@@ -379,7 +330,6 @@ Be conversational, helpful, and only use tools when you have clear requirements!
                 type: "complete",
                 sessionId: currentSessionId,
                 fullText: messageToStore,
-                hasToolResults: toolResults.length > 0,
               })}\n\n`
             )
           );
