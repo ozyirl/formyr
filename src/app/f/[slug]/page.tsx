@@ -7,7 +7,6 @@ export default async function FormPage({
 }: {
   params: { slug: string };
 }) {
-  // fetch from DB by slug
   const [form] = await db
     .select()
     .from(forms)
