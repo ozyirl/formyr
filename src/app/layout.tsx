@@ -34,14 +34,14 @@ export default function RootLayout({
 }>) {
 	return (
 		<ClerkProvider>
-			<nav className="sticky top-0 z-50 items-stretch justify-center">
-				<Navbar />
-			</nav>
-			<html lang="en" suppressHydrationWarning>
-				<body
-					className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-				>
-					<ThemeProvider>
+			<ThemeProvider>
+				<nav className="sticky top-0 z-50 items-stretch justify-center">
+					<Navbar />
+				</nav>
+				<html lang="en" suppressHydrationWarning>
+					<body
+						className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+					>
 						{/* <header className="flex h-16 items-center justify-end gap-4 p-4"> */}
 						<SignedOut></SignedOut>
 						<SignedIn>
@@ -52,9 +52,9 @@ export default function RootLayout({
 						{/* </header> */}
 						<FloatingDockClient />
 						{children}
-					</ThemeProvider>
-				</body>
-			</html>
+					</body>
+				</html>
+			</ThemeProvider>
 		</ClerkProvider>
 	);
 }

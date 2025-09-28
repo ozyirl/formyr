@@ -11,6 +11,7 @@ import {
 } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import Landing from "./landing/page";
 
 const RedirectToDashboard = () => {
 	const router = useRouter();
@@ -29,7 +30,7 @@ export default function Home() {
 				<RedirectToDashboard />
 			</SignedIn>
 			<SignedOut>
-				<RedirectToSignIn />
+				<Landing />
 			</SignedOut>
 		</>
 	);
