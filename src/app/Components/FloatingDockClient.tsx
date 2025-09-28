@@ -2,41 +2,39 @@
 
 import { FloatingDock } from "@/components/ui/floating-dock";
 import {
+	IconChartHistogram,
 	IconList,
 	IconPlus,
-	IconChartHistogram,
 	IconUserCircle,
 } from "@tabler/icons-react";
-import { useRouter } from "next/navigation";
 
 export default function FloatingDockClient() {
-	const router = useRouter();
 	const links = [
 		{
 			title: "My Forms",
 			icon: (
-				<IconList className="h-full w-full text-neutral-500 dark:text-neutral-300" />
+				<IconList className="h-full w-full text-muted-foreground transition-colors" />
 			),
-			href: "/dashboard",
+			href: "/myforms",
 		},
 		{
 			title: "Create Form",
 			icon: (
-				<IconPlus className="h-full w-full text-neutral-500 dark:text-neutral-300" />
+				<IconPlus className="h-full w-full text-muted-foreground transition-colors" />
 			),
 			href: "/create-form",
 		},
 		{
 			title: "Analytics",
 			icon: (
-				<IconChartHistogram className="h-full w-full text-neutral-500 dark:text-neutral-300" />
+				<IconChartHistogram className="h-full w-full text-muted-foreground transition-colors" />
 			),
 			href: "/analytics",
 		},
 		{
 			title: "Profile",
 			icon: (
-				<IconUserCircle className="h-full w-full text-neutral-500 dark:text-neutral-300" />
+				<IconUserCircle className="h-full w-full text-muted-foreground transition-colors" />
 			),
 			href: "/profile",
 		},
@@ -44,10 +42,7 @@ export default function FloatingDockClient() {
 
 	return (
 		// Keep clicks only on the dock; let clicks pass through elsewhere
-		<div
-			className="pointer-events-none fixed left-1/2 -translate-x-1/2 z-50
-                    bottom-[max(1rem,env(safe-area-inset-bottom))]"
-		>
+		<div className="pointer-events-none fixed left-1/2 -translate-x-1/2 bottom-[max(1rem,env(safe-area-inset-bottom))] z-50">
 			<div className="pointer-events-auto">
 				<FloatingDock items={links} />
 			</div>
