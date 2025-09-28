@@ -1,0 +1,1 @@
+ALTER TABLE "forms" ADD COLUMN "user_id" varchar(256) NOT NULL;
