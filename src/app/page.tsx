@@ -8,6 +8,7 @@ import {
 } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import Landing from "./landing/page";
 
 const RedirectToDashboard = () => {
   const router = useRouter();
@@ -20,14 +21,16 @@ const RedirectToDashboard = () => {
 };
 
 export default function Home() {
-  return (
-    <>
-      <SignedIn>
-        <RedirectToDashboard />
-      </SignedIn>
-      <SignedOut>
-        <RedirectToSignIn />
-      </SignedOut>
-    </>
-  );
+
+	return (
+		<>
+			<SignedIn>
+				<RedirectToDashboard />
+			</SignedIn>
+			<SignedOut>
+				<Landing />
+			</SignedOut>
+		</>
+	);
+
 }

@@ -7,9 +7,8 @@ import {
   UserButton,
 } from "@clerk/nextjs";
 
-import { ModeToggle } from "@/components/mode-toggle";
-
 const Profile = () => {
+
   return (
     <>
       <div className="flex items-center gap-3 justify-center h-screen">
@@ -28,6 +27,7 @@ const Profile = () => {
       </SignedOut>
     </>
   );
+
 };
 
 export default Profile;

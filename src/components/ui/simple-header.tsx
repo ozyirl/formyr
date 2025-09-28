@@ -1,12 +1,23 @@
 "use client";
 import React from "react";
-import { Grid2x2PlusIcon } from "lucide-react";
+import { Grid2x2PlusIcon, User } from "lucide-react";
 import { Sheet, SheetContent, SheetFooter } from "@/components/ui/sheet";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { MenuToggle } from "@/components/ui/menu-toggle";
-import { UserButton } from "@clerk/nextjs";
+
+import Image from "next/image";
+import {
+	SignedIn,
+	SignedOut,
+	SignInButton,
+	SignUpButton,
+	UserButton,
+} from "@clerk/nextjs";
+import { ModeToggle } from "../mode-toggle";
+
 export function Navbar() {
-  const [open, setOpen] = React.useState(false);
+	const [open, setOpen] = React.useState(false);
+
 
   return (
     <header className="bg-background/95 supports-[backdrop-filter]:bg-background/80 sticky top-1/4 z-50 w-full border-b backdrop-blur-lg">
@@ -18,8 +29,17 @@ export function Navbar() {
         <div className="hidden items-center gap-2 lg:flex">
           <h1 className={buttonVariants({ variant: "ghost" })}>Github</h1>
 
-          <Button variant="outline">Sign In</Button>
-          <Button>Get Started</Button>
+          <SignedOut>
+						<SignInButton mode="modal">
+							<Button variant="outline">Sign In</Button>
+						</SignInButton>
+						<SignUpButton mode="modal">
+							<Button>Get Started</Button>
+						</SignUpButton>
+					</SignedOut>
+					<SignedIn>
+						<UserButton />
+					</SignedIn>
         </div>
         <Sheet open={open} onOpenChange={setOpen}>
           <Button size="icon" variant="outline" className="lg:hidden">
@@ -47,4 +67,5 @@ export function Navbar() {
       </nav>
     </header>
   );
+
 }
