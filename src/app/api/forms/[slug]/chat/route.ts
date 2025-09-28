@@ -82,7 +82,6 @@ export async function POST(
       );
     }
 
-    // Load form by slug to verify it exists and is published
     const [form] = await db
       .select({
         id: forms.id,
@@ -102,12 +101,22 @@ export async function POST(
       return NextResponse.json({ error: "Form not found" }, { status: 404 });
     }
 
-    // Handle chat session - create one if not provided
     let currentSessionId = sessionId;
     if (!currentSessionId) {
       console.log("💬 Creating new chat session for form filling...");
+
+      const forwardedFor = request.headers.get("x-forwarded-for");
+      const realIp = request.headers.get("x-real-ip");
+      const userAgent = request.headers.get("user-agent");
+      const ipAddress = forwardedFor?.split(",")[0] || realIp || "unknown";
+      const uniqueUserId = `anonymous_${Buffer.from(
+        `${ipAddress}_${userAgent}_${Date.now()}`
+      )
+        .toString("base64")
+        .slice(0, 16)}`;
+
       const sessionResult = await createChatSession({
-        userId: "anonymous", // For public forms, we'll use anonymous
+        userId: uniqueUserId,
         formId: form.id,
         title: `Form Fill: ${form.title}`,
       });

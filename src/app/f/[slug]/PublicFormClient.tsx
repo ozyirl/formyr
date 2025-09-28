@@ -78,6 +78,27 @@ export default function PublicFormClient({ slug }: PublicFormClientProps) {
   const [currentQuestion, setCurrentQuestion] = useState<string>("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Helper function to manage session storage
+  const getSessionStorageKey = (formSlug: string) => `form_session_${formSlug}`;
+  const getSubmissionStorageKey = (formSlug: string) =>
+    `form_submitted_${formSlug}`;
+
+  // Function to reset form and start over
+  const handleStartNewForm = () => {
+    localStorage.removeItem(getSessionStorageKey(slug));
+    localStorage.removeItem(getSubmissionStorageKey(slug));
+    setSessionId(undefined);
+    setMessages([]);
+    setAnswers({});
+    setIsComplete(false);
+    setIsSubmitted(false);
+    setCurrentQuestion("");
+    setInputValue("");
+
+    // Reload the form to start fresh
+    window.location.reload();
+  };
+
   const sendMessage = useCallback(
     async (
       message: string,
@@ -117,6 +138,10 @@ export default function PublicFormClient({ slug }: PublicFormClientProps) {
         // Update session ID if this is the first message
         if (!sessionId && chatResponse.sessionId) {
           setSessionId(chatResponse.sessionId);
+          localStorage.setItem(
+            getSessionStorageKey(slug),
+            chatResponse.sessionId.toString()
+          );
         }
 
         // Add assistant message
@@ -192,6 +217,22 @@ export default function PublicFormClient({ slug }: PublicFormClientProps) {
         const formData = await response.json();
         setForm(formData);
 
+        // Check if user already submitted this form
+        const hasSubmitted =
+          localStorage.getItem(getSubmissionStorageKey(slug)) === "true";
+        if (hasSubmitted) {
+          setIsSubmitted(true);
+          return;
+        }
+
+        // Check for existing session
+        const existingSessionId = localStorage.getItem(
+          getSessionStorageKey(slug)
+        );
+        if (existingSessionId) {
+          setSessionId(parseInt(existingSessionId));
+        }
+
         // Start the conversation with a welcome message
         if (formData.schema) {
           const welcomeMessage: ChatMessage = {
@@ -256,6 +297,9 @@ export default function PublicFormClient({ slug }: PublicFormClientProps) {
 
       if (response.ok) {
         setIsSubmitted(true);
+        // Store submission state in localStorage for this specific session
+        localStorage.setItem(getSubmissionStorageKey(slug), "true");
+
         const successMessage: ChatMessage = {
           role: "assistant",
           content:
@@ -374,7 +418,7 @@ export default function PublicFormClient({ slug }: PublicFormClientProps) {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 }}
-              className="text-sm text-gray-500 dark:text-gray-500"
+              className="text-sm text-gray-500 dark:text-gray-500 mb-6"
             >
               <p className="font-medium text-gray-700 dark:text-gray-300 mb-2">
                 &ldquo;{form.title}&rdquo;
@@ -387,6 +431,16 @@ export default function PublicFormClient({ slug }: PublicFormClientProps) {
                 })}
               </p>
             </motion.div>
+
+            <motion.button
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6 }}
+              onClick={handleStartNewForm}
+              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-all duration-200 transform hover:scale-105 shadow-sm"
+            >
+              Fill Out Form Again
+            </motion.button>
           </div>
         </motion.div>
       </div>
