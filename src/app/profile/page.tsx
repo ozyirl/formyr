@@ -1,5 +1,6 @@
 "use client";
 
+import { ModeToggle } from "@/components/mode-toggle";
 import {
   RedirectToSignIn,
   SignedIn,
@@ -8,7 +9,6 @@ import {
 } from "@clerk/nextjs";
 
 const Profile = () => {
-
   return (
     <>
       <div className="flex items-center gap-3 justify-center h-screen">
@@ -27,7 +27,6 @@ const Profile = () => {
       </SignedOut>
     </>
   );
-
 };
 
 export default Profile;
