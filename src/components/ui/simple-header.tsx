@@ -4,24 +4,9 @@ import { Grid2x2PlusIcon } from "lucide-react";
 import { Sheet, SheetContent, SheetFooter } from "@/components/ui/sheet";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { MenuToggle } from "@/components/ui/menu-toggle";
-import Image from "next/image";
+import { UserButton } from "@clerk/nextjs";
 export function Navbar() {
   const [open, setOpen] = React.useState(false);
-
-  const links = [
-    {
-      label: "Features",
-      href: "#",
-    },
-    {
-      label: "Pricing",
-      href: "#",
-    },
-    {
-      label: "About",
-      href: "#",
-    },
-  ];
 
   return (
     <header className="bg-background/95 supports-[backdrop-filter]:bg-background/80 sticky top-1/4 z-50 w-full border-b backdrop-blur-lg">
