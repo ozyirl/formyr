@@ -1,10 +1,10 @@
 import { type Metadata } from "next";
 import {
-	ClerkProvider,
-	SignInButton,
-	SignUpButton,
-	SignedIn,
-	SignedOut,
+  ClerkProvider,
+  SignInButton,
+  SignUpButton,
+  SignedIn,
+  SignedOut,
 } from "@clerk/nextjs";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
@@ -13,48 +13,48 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { ModeToggle } from "@/components/mode-toggle";
 import { Navbar } from "@/components/ui/simple-header";
 const geistSans = Geist({
-	variable: "--font-geist-sans",
-	subsets: ["latin"],
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
 });
 
 const geistMono = Geist_Mono({
-	variable: "--font-geist-mono",
-	subsets: ["latin"],
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
-	title: "Intellifill",
-	description: "Create and manage forms with ai",
+  title: "formyr",
+  description: "Create and manage forms with ai",
 };
 
 export default function RootLayout({
-	children,
+  children,
 }: Readonly<{
-	children: React.ReactNode;
+  children: React.ReactNode;
 }>) {
-	return (
-		<ClerkProvider>
-			<ThemeProvider>
-				<nav className="sticky top-0 z-50 items-stretch justify-center">
-					<Navbar />
-				</nav>
-				<html lang="en" suppressHydrationWarning>
-					<body
-						className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-					>
-						{/* <header className="flex h-16 items-center justify-end gap-4 p-4"> */}
-						<SignedOut></SignedOut>
-						<SignedIn>
-							{/* <UserButton /> */}
+  return (
+    <ClerkProvider>
+      <ThemeProvider>
+        <nav className="sticky top-0 z-50 items-stretch justify-center">
+          <Navbar />
+        </nav>
+        <html lang="en" suppressHydrationWarning>
+          <body
+            className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+          >
+            {/* <header className="flex h-16 items-center justify-end gap-4 p-4"> */}
+            <SignedOut></SignedOut>
+            <SignedIn>
+              {/* <UserButton /> */}
 
-							<FloatingDockClient />
-						</SignedIn>
-						{/* </header> */}
-						<FloatingDockClient />
-						{children}
-					</body>
-				</html>
-			</ThemeProvider>
-		</ClerkProvider>
-	);
+              <FloatingDockClient />
+            </SignedIn>
+            {/* </header> */}
+            <FloatingDockClient />
+            {children}
+          </body>
+        </html>
+      </ThemeProvider>
+    </ClerkProvider>
+  );
 }
