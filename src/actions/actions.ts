@@ -105,7 +105,7 @@ export async function saveForm(formData: FormData, userId?: string) {
     return {
       success: true,
       form: savedForm,
-      url: `/f/${slug}`,
+      url: `/form/${slug}`,
     };
   } catch (error) {
     console.error("Error saving form:", error);
