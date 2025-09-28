@@ -17,6 +17,7 @@ export const forms = pgTable("forms", {
   schemaJson: jsonb("schema_json").notNull(),
   version: integer("version").default(1).notNull(),
   isPublished: boolean("is_published").default(false).notNull(),
+  userId: varchar("user_id", { length: 256 }).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
