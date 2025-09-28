@@ -8,7 +8,7 @@ import {
 } from "@clerk/nextjs";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import FloatingDockClient from "./Components/FloatingDockClient";
+import FloatingDockClient from "../components/FloatingDockClient";
 import { ThemeProvider } from "@/components/theme-provider";
 
 const geistSans = Geist({
@@ -33,7 +33,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+      >
         <ThemeProvider>
           <header className="flex h-16 items-center justify-end gap-4 p-4">
             <SignedOut>
