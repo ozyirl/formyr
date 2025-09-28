@@ -3,7 +3,7 @@ import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 // Define public routes that don't require authentication
 const isPublic = createRouteMatcher([
   "/", // landing page
-  "/f/(.*)", // public form pages with any slug
+  "/form/(.*)", // public form pages with any slug
   "/api/forms/(.*)", // all form API endpoints (GET schema, POST submit)
   "/api/health-check", // health check endpoint
   "/sign-in(.*)", // Clerk sign-in pages
