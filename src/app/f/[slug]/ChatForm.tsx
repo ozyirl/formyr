@@ -43,6 +43,8 @@ interface ChatFormProps {
   slug: string;
 }
 
+type FormAnswers = Record<string, string | number>;
+
 export default function ChatForm({ slug }: ChatFormProps) {
   const [form, setForm] = useState<FormData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -52,9 +54,7 @@ export default function ChatForm({ slug }: ChatFormProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [currentFieldIndex, setCurrentFieldIndex] = useState(0);
   const [inputValue, setInputValue] = useState("");
-  const [collectedAnswers, setCollectedAnswers] = useState<Record<string, any>>(
-    {}
-  );
+  const [collectedAnswers, setCollectedAnswers] = useState<FormAnswers>({});
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isReadyToSubmit, setIsReadyToSubmit] = useState(false);
 
