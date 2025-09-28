@@ -2,6 +2,9 @@
 
 import { db } from "@/db";
 import { forms } from "@/db/schema";
+import { auth } from "@clerk/nextjs/server";
+import { eq } from "drizzle-orm";
+import { desc } from "drizzle-orm";
 
 export interface FormData {
   title: string;
@@ -31,16 +34,16 @@ function generateSlug(title: string): string {
   return (
     title
       .toLowerCase()
-      .replace(/[^\w\s-]/g, "") // Remove special characters
-      .replace(/\s+/g, "-") // Replace spaces with hyphens
-      .replace(/-+/g, "-") // Remove duplicate hyphens
+      .replace(/[^\w\s-]/g, "")
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-")
       .trim() +
     "-" +
     Date.now()
-  ); // Add timestamp for uniqueness
+  );
 }
 
-export async function saveForm(formData: FormData) {
+export async function saveForm(formData: FormData, userId?: string) {
   try {
     console.log("🗄️ saveForm called with:", formData);
     console.log("🔌 DATABASE_URL exists:", !!process.env.DATABASE_URL);
@@ -49,10 +52,20 @@ export async function saveForm(formData: FormData) {
       process.env.DATABASE_URL ? "***configured***" : "undefined"
     );
 
+    let currentUserId = userId;
+    if (!currentUserId) {
+      const { userId: authUserId } = await auth();
+      if (!authUserId) {
+        throw new Error("User not authenticated");
+      }
+      currentUserId = authUserId;
+    }
+
+    console.log("👤 Using userId:", currentUserId);
+
     const slug = generateSlug(formData.title);
     console.log("🔗 Generated slug:", slug);
 
-    // Test database connection
     try {
       console.log("🧪 Testing database connection...");
       await db.select().from(forms).limit(1);
@@ -69,7 +82,8 @@ export async function saveForm(formData: FormData) {
         title: formData.title,
         description: formData.description,
         schemaJson: formData,
-        isPublished: true, // Auto-publish forms created by AI
+        isPublished: true,
+        userId: currentUserId,
       })
       .returning();
 
@@ -85,6 +99,36 @@ export async function saveForm(formData: FormData) {
     return {
       success: false,
       error: "Failed to save form to database",
+    };
+  }
+}
+
+export async function getForms(userId?: string) {
+  try {
+    let currentUserId = userId;
+    if (!currentUserId) {
+      const { userId: authUserId } = await auth();
+      if (!authUserId) {
+        throw new Error("User not authenticated");
+      }
+      currentUserId = authUserId;
+    }
+
+    const userForms = await db
+      .select()
+      .from(forms)
+      .where(eq(forms.userId, currentUserId))
+      .orderBy(desc(forms.createdAt));
+
+    return {
+      success: true,
+      forms: userForms,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: "Failed to fetch forms",
+      forms: [],
     };
   }
 }
