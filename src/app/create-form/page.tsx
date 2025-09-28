@@ -41,6 +41,7 @@ interface ApiResponse {
   formSchema?: FormSchema;
   formUrl?: string;
   formId?: string;
+  sessionId?: number;
   error?: string;
 }
 
@@ -50,6 +51,7 @@ export default function PureMultimodalInputOnlyDisplay() {
   const [chatId] = useState("demo-input-only");
   const [messages, setMessages] = useState<UIMessage[]>([]);
   const [response, setResponse] = useState<string>("");
+  const [sessionId, setSessionId] = useState<number | null>(null);
 
   const handleSendMessage = useCallback(
     async ({
@@ -61,7 +63,6 @@ export default function PureMultimodalInputOnlyDisplay() {
     }) => {
       if (!input.trim()) return;
 
-      // Add user message to chat
       const userMessage: UIMessage = {
         id: `user-${Date.now()}`,
         content: input,
@@ -77,7 +78,10 @@ export default function PureMultimodalInputOnlyDisplay() {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ message: input }),
+          body: JSON.stringify({
+            message: input,
+            sessionId: sessionId,
+          }),
         });
 
         if (!response.ok) {
@@ -86,6 +90,11 @@ export default function PureMultimodalInputOnlyDisplay() {
 
         const data: ApiResponse = await response.json();
 
+        if (data.sessionId && !sessionId) {
+          setSessionId(data.sessionId);
+          console.log("💬 Session ID set:", data.sessionId);
+        }
+
         const aiMessage: UIMessage = {
           id: `ai-${Date.now()}`,
           content: data.message,
@@ -93,7 +102,6 @@ export default function PureMultimodalInputOnlyDisplay() {
         };
         setMessages((prev) => [...prev, aiMessage]);
 
-        // Handle different response types
         if (data.type === "form_created" && data.formUrl) {
           setResponse(
             `Form created successfully! You can access it at: ${data.formUrl}`
@@ -119,7 +127,7 @@ export default function PureMultimodalInputOnlyDisplay() {
         setIsGenerating(false);
       }
     },
-    []
+    [sessionId]
   );
 
   const handleStopGenerating = useCallback(() => {
@@ -142,7 +150,6 @@ export default function PureMultimodalInputOnlyDisplay() {
           </p>
         </div>
 
-        {/* Chat Messages Display */}
         {messages.length > 0 && (
           <div className="bg-white rounded-lg shadow-sm border p-4 max-h-96 overflow-y-auto">
             <h2 className="text-lg font-semibold mb-4">Conversation</h2>

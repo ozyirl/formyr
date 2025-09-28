@@ -2,20 +2,62 @@ import { NextResponse } from "next/server";
 import { generateText, tool } from "ai";
 import { google } from "@ai-sdk/google";
 import { z } from "zod";
-import { saveForm, type FormData } from "@/actions/actions";
+import {
+  saveForm,
+  type FormData,
+  createChatSession,
+  saveChatMessage,
+  updateChatSessionWithForm,
+} from "@/actions/actions";
 import { auth } from "@clerk/nextjs/server";
 export async function POST(request: Request) {
   const { userId } = await auth();
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  const { message } = await request.json();
+  const { message, sessionId } = await request.json();
   if (!message) {
     return NextResponse.json({ error: "Message is required" }, { status: 400 });
   }
 
   try {
-    console.log("🤖 Incoming request:", message);
+    console.log("🤖 Incoming request:", message, "sessionId:", sessionId);
+
+    // Handle chat session - create one if not provided
+    let currentSessionId = sessionId;
+    if (!currentSessionId) {
+      console.log("💬 Creating new chat session...");
+      const sessionResult = await createChatSession({
+        userId,
+        title: "Form Creation Chat",
+      });
+
+      if (sessionResult.success && sessionResult.session) {
+        currentSessionId = sessionResult.session.id;
+        console.log("✅ New session created:", currentSessionId);
+      } else {
+        console.error("❌ Failed to create session:", sessionResult.error);
+        return NextResponse.json(
+          { error: "Failed to create chat session" },
+          { status: 500 }
+        );
+      }
+    }
+
+    // Store user message
+    console.log("💬 Storing user message...");
+    const userMessageResult = await saveChatMessage({
+      sessionId: currentSessionId,
+      role: "user",
+      content: message,
+    });
+
+    if (!userMessageResult.success) {
+      console.error(
+        "❌ Failed to store user message:",
+        userMessageResult.error
+      );
+    }
 
     console.log("🔧 Starting generateText with tools...");
     const result = await generateText({
@@ -225,35 +267,79 @@ User request: ${message}`,
 
         if (saveResult.success) {
           console.log("✅ Form saved successfully!");
+          const responseMessage =
+            result.text ||
+            `I've created your form: "${formSchema.title}"! You can access it at ${saveResult.url}`;
+
+          // Store AI response message
+          await saveChatMessage({
+            sessionId: currentSessionId,
+            role: "assistant",
+            content: responseMessage,
+          });
+
+          // Update session with form link if form was created
+          if (saveResult.form?.id) {
+            console.log("🔗 Form created with ID:", saveResult.form.id);
+            const updateResult = await updateChatSessionWithForm(
+              currentSessionId,
+              saveResult.form.id
+            );
+            if (updateResult.success) {
+              console.log("✅ Session successfully linked to form");
+            } else {
+              console.error(
+                "❌ Failed to link session to form:",
+                updateResult.error
+              );
+            }
+          }
+
           return NextResponse.json({
-            message:
-              result.text ||
-              `I've created your form: "${formSchema.title}"! You can access it at ${saveResult.url}`,
+            message: responseMessage,
             formSchema,
             formUrl: saveResult.url,
             formId: saveResult.form?.id,
+            sessionId: currentSessionId,
             type: "form_created",
           });
         } else {
-          console.log("❌ Failed to save form to database");
+          const errorMessage =
+            result.text ||
+            "I've created a form based on your request, but couldn't save it to the database.";
+
+          // Store AI error response
+          await saveChatMessage({
+            sessionId: currentSessionId,
+            role: "assistant",
+            content: errorMessage,
+          });
+
           return NextResponse.json({
-            message:
-              result.text ||
-              "I've created a form based on your request, but couldn't save it to the database.",
+            message: errorMessage,
             formSchema,
             error: saveResult.error,
+            sessionId: currentSessionId,
             type: "form_created_with_error",
           });
         }
       }
-    } else {
-      console.log("❌ No tools were called - treating as conversation");
     }
 
+    const conversationMessage =
+      result.text ||
+      "I'm here to help you create forms! Just describe what kind of form you need.";
+
+    // Store AI response for general conversation
+    await saveChatMessage({
+      sessionId: currentSessionId,
+      role: "assistant",
+      content: conversationMessage,
+    });
+
     return NextResponse.json({
-      message:
-        result.text ||
-        "I'm here to help you create forms! Just describe what kind of form you need.",
+      message: conversationMessage,
+      sessionId: currentSessionId,
       type: "conversation",
     });
   } catch (error) {
