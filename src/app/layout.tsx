@@ -7,8 +7,10 @@ import {
 	SignedOut,
 	UserButton,
 } from "@clerk/nextjs";
+import { dark } from "@clerk/themes";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import FloatingDockClient from "./Components/FloatingDockClient";
 
 const geistSans = Geist({
 	variable: "--font-geist-sans",
@@ -31,7 +33,11 @@ export default function RootLayout({
 	children: React.ReactNode;
 }>) {
 	return (
-		<ClerkProvider>
+		<ClerkProvider
+			appearance={{
+				baseTheme: dark,
+			}}
+		>
 			<html lang="en">
 				<body
 					className={`${geistSans.variable} ${geistMono.variable} antialiased`}
@@ -47,8 +53,10 @@ export default function RootLayout({
 						</SignedOut>
 						<SignedIn>
 							<UserButton />
+							<FloatingDockClient />
 						</SignedIn>
 					</header>
+					<FloatingDockClient />
 					{children}
 				</body>
 			</html>
