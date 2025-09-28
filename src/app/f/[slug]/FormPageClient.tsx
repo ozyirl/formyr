@@ -36,14 +36,57 @@ export default function FormPageClient({ form, slug }: FormPageClientProps) {
   const [activeView, setActiveView] = useState<"responses" | "chat">(
     "responses"
   );
+  const [copied, setCopied] = useState(false);
+
+  // Get the deployed URL for the form
+  const deployedUrl =
+    process.env.NEXT_PUBLIC_DEPLOYED_URL ||
+    process.env.DEPLOYED_URL ||
+    "https://mlh-frontend.vercel.app";
+  const formUrl = `${deployedUrl}/form/${slug}`;
+
+  const handleCopyUrl = async () => {
+    try {
+      await navigator.clipboard.writeText(formUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy URL:", err);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-zinc-950">
       {/* Header */}
       <div className="bg-white dark:bg-zinc-950 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
           {form.title}
         </h1>
+
+        {/* Form URL Display */}
+        <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border">
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Form URL:
+              </p>
+              <p className="text-sm text-gray-600 dark:text-gray-400 font-mono break-all">
+                {formUrl}
+              </p>
+            </div>
+            <button
+              onClick={handleCopyUrl}
+              className={`ml-3 px-3 py-1 text-xs rounded-md transition-colors ${
+                copied
+                  ? "bg-green-500 text-white"
+                  : "bg-blue-500 hover:bg-blue-600 text-white"
+              }`}
+              title="Copy URL"
+            >
+              {copied ? "✓ Copied!" : "Copy"}
+            </button>
+          </div>
+        </div>
 
         {/* View Toggle */}
         <div className="flex items-center gap-4">
