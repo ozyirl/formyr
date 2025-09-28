@@ -267,15 +267,22 @@ User request: ${message}`,
 
         if (saveResult.success) {
           console.log("✅ Form saved successfully!");
+          const deployedUrl =
+            process.env.DEPLOYED_URL ||
+            process.env.NEXT_PUBLIC_URL ||
+            "http://localhost:3000";
+          const fullUrl = `${deployedUrl}${saveResult.url}`;
+
           const responseMessage =
-            result.text ||
-            `I've created your form: "${formSchema.title}"! You can access it at ${saveResult.url}`;
+            result.text || `I've created your form: "${formSchema.title}"!`;
+
+          const finalMessage = `${responseMessage}\n\n🎉 **Your form has been created successfully!** Redirecting to dashboard...`;
 
           // Store AI response message
           await saveChatMessage({
             sessionId: currentSessionId,
             role: "assistant",
-            content: responseMessage,
+            content: finalMessage,
           });
 
           // Update session with form link if form was created
@@ -296,7 +303,7 @@ User request: ${message}`,
           }
 
           return NextResponse.json({
-            message: responseMessage,
+            message: finalMessage,
             formSchema,
             formUrl: saveResult.url,
             formId: saveResult.form?.id,

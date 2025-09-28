@@ -64,29 +64,40 @@ export async function POST(request: Request) {
     console.log("🔧 Starting streamText with tools...");
     const result = streamText({
       model: google("gemini-2.5-flash"),
-      prompt: `You are a Form Creator Bot. Your primary job is to help users create forms by analyzing their requests.
+      prompt: `You are a helpful and conversational Form Creator Bot. Your job is to help users create forms through natural conversation.
 
-IMPORTANT: When a user mentions form-related content, you MUST use the createForm tool with proper parameters.
+CONVERSATION FLOW:
+1. First, respond conversationally to understand what the user needs
+2. Ask clarifying questions if needed  
+3. When you have enough information, use the createForm tool to create the form
+4. Explain what you've created in a friendly way
 
-EXAMPLE: If user says "I need a contact form with name, email, phone"
-You MUST call createForm with:
-{
-  "title": "Contact Form",
-  "fields": [
-    {"id": "name", "name": "Full Name", "type": "text", "required": true, "placeholder": "Enter your name"},
-    {"id": "email", "name": "Email", "type": "email", "required": true, "placeholder": "Enter your email"}, 
-    {"id": "phone", "name": "Phone", "type": "text", "required": true, "placeholder": "Enter your phone number"}
-  ]
-}
+WHEN TO USE TOOLS:
+- Only use the createForm tool when you have clear, specific form requirements
+- If the user's request is vague, ask for clarification first instead of using tools
 
-Always extract field information and create appropriate field objects. Common field mappings:
+EXAMPLES:
+
+User: "I need a contact form with name, email, phone"
+Response: "I'll create a contact form for you with those fields. Let me set that up!"
+Then use createForm tool with appropriate parameters.
+
+User: "I need a form"
+Response: "I'd be happy to help you create a form! What kind of form do you need? What information do you want to collect from users?"
+
+User: "Hello"
+Response: "Hi there! I'm here to help you create custom forms. What kind of form would you like to build today?"
+
+FIELD MAPPINGS:
 - "name" → {"id": "name", "name": "Full Name", "type": "text"}
 - "email" → {"id": "email", "name": "Email Address", "type": "email"}  
 - "phone" → {"id": "phone", "name": "Phone Number", "type": "text"}
 - "age" → {"id": "age", "name": "Age", "type": "number"}
 - "message" → {"id": "message", "name": "Message", "type": "textarea"}
 
-User request: ${message}`,
+User request: ${message}
+
+Be conversational, helpful, and only use tools when you have clear requirements!`,
       tools: {
         createForm: tool({
           description:
@@ -240,7 +251,7 @@ User request: ${message}`,
           },
         }),
       },
-      toolChoice: { type: "tool", toolName: "createForm" },
+      toolChoice: "auto", // Let the AI decide when to use tools
       onStepFinish({ text, toolCalls, toolResults, finishReason }) {
         console.log("🔄 Stream step finished:", {
           text: text?.substring(0, 100) + (text?.length > 100 ? "..." : ""),
@@ -257,60 +268,140 @@ User request: ${message}`,
     const stream = new ReadableStream({
       async start(controller) {
         let fullText = "";
-        let toolResult: any = null;
+        let toolResults: any[] = [];
 
-        for await (const chunk of result.textStream) {
-          fullText += chunk;
+        try {
+          // Stream text as it comes
+          for await (const chunk of result.textStream) {
+            fullText += chunk;
+            console.log("📝 Streaming chunk:", chunk);
 
-          // Send text chunk
+            // Send text chunk immediately
+            controller.enqueue(
+              encoder.encode(
+                `data: ${JSON.stringify({
+                  type: "text",
+                  content: chunk,
+                  sessionId: currentSessionId,
+                })}\n\n`
+              )
+            );
+          }
+
+          console.log("✅ Text streaming completed, full text:", fullText);
+
+          // Wait for the final result with tool calls
+          const finalResult = await result.response;
+          console.log("🔧 Final result:", {
+            text: finalResult.text,
+            toolResults: finalResult.toolResults?.length || 0,
+          });
+
+          // Handle tool results if any
+          if (finalResult.toolResults && finalResult.toolResults.length > 0) {
+            toolResults = finalResult.toolResults;
+
+            for (const toolResult of toolResults) {
+              console.log("🛠️ Processing tool result:", toolResult.toolName);
+              console.log(
+                "🔍 Full tool result structure:",
+                JSON.stringify(toolResult, null, 2)
+              );
+
+              // If this is a form creation result, append the full URL to the message
+              if (toolResult.toolName === "createForm") {
+                // Check different possible result structures
+                const result =
+                  toolResult.result || toolResult.output || toolResult;
+                console.log(
+                  "🔍 Extracted result:",
+                  JSON.stringify(result, null, 2)
+                );
+
+                if (result?.success && result?.formUrl) {
+                  const deployedUrl =
+                    process.env.DEPLOYED_URL ||
+                    process.env.NEXT_PUBLIC_URL ||
+                    "http://localhost:3000";
+                  const formUrl = result.formUrl;
+                  const fullUrl = `${deployedUrl}${formUrl}`;
+
+                  console.log("🌐 Full form URL:", fullUrl);
+
+                  // Append simple success message
+                  const urlMessage = `\n\n🎉 **Your form has been created successfully!** Redirecting to dashboard...`;
+
+                  // Stream the URL message
+                  for (const char of urlMessage) {
+                    controller.enqueue(
+                      encoder.encode(
+                        `data: ${JSON.stringify({
+                          type: "text",
+                          content: char,
+                          sessionId: currentSessionId,
+                        })}\n\n`
+                      )
+                    );
+                    // Small delay for typing effect
+                    await new Promise((resolve) => setTimeout(resolve, 20));
+                  }
+
+                  fullText += urlMessage;
+                }
+              }
+
+              // Send tool result
+              controller.enqueue(
+                encoder.encode(
+                  `data: ${JSON.stringify({
+                    type: "tool_result",
+                    content: toolResult,
+                    sessionId: currentSessionId,
+                  })}\n\n`
+                )
+              );
+            }
+          }
+
+          // Store AI response message
+          const messageToStore =
+            fullText || finalResult.text || "I've processed your request.";
+          await saveChatMessage({
+            sessionId: currentSessionId,
+            role: "assistant",
+            content: messageToStore,
+          });
+
+          // Send completion signal
           controller.enqueue(
             encoder.encode(
               `data: ${JSON.stringify({
-                type: "text",
-                content: chunk,
+                type: "complete",
+                sessionId: currentSessionId,
+                fullText: messageToStore,
+                hasToolResults: toolResults.length > 0,
+              })}\n\n`
+            )
+          );
+
+          controller.close();
+        } catch (error) {
+          console.error("❌ Streaming error:", error);
+
+          // Send error message
+          controller.enqueue(
+            encoder.encode(
+              `data: ${JSON.stringify({
+                type: "error",
+                content:
+                  "Sorry, I encountered an error while processing your request.",
                 sessionId: currentSessionId,
               })}\n\n`
             )
           );
+
+          controller.close();
         }
-
-        // Wait for tool results
-        const finalResult = await result.response;
-        if (finalResult.toolResults && finalResult.toolResults.length > 0) {
-          toolResult = finalResult.toolResults[0];
-
-          // Send tool result
-          controller.enqueue(
-            encoder.encode(
-              `data: ${JSON.stringify({
-                type: "tool_result",
-                content: toolResult,
-                sessionId: currentSessionId,
-              })}\n\n`
-            )
-          );
-        }
-
-        // Store AI response message
-        await saveChatMessage({
-          sessionId: currentSessionId,
-          role: "assistant",
-          content:
-            fullText || "I've processed your request and created the form.",
-        });
-
-        // Send completion signal
-        controller.enqueue(
-          encoder.encode(
-            `data: ${JSON.stringify({
-              type: "complete",
-              sessionId: currentSessionId,
-              fullText,
-            })}\n\n`
-          )
-        );
-
-        controller.close();
       },
     });
 
