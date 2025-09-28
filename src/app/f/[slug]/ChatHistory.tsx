@@ -21,7 +21,7 @@ export default function ChatHistory({ formSlug }: ChatHistoryProps) {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [loadingMessages, setLoadingMessages] = useState(true);
 
-  // Fetch chat messages when component mounts
+  // Fetch chat messages when component mounts test
   useEffect(() => {
     async function fetchChatMessages() {
       try {
