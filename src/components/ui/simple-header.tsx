@@ -24,7 +24,7 @@ export function Navbar() {
       <nav className="flex h-14 w-full items-center justify-between px-4">
         <div className="flex items-center gap-2">
           <Grid2x2PlusIcon className="size-6" />
-          <Link href="/dashboard">
+          <Link href="/landing">
             <p className="font-mono text-lg font-bold">Formyr</p>
           </Link>
         </div>

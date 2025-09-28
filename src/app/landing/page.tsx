@@ -10,8 +10,11 @@ import {
   Users,
   CheckCircle,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 const Landing = () => {
+  const router = useRouter();
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/20">
       {/* Hero Section */}
@@ -37,20 +40,6 @@ const Landing = () => {
             users will love filling them out, and you&apos;ll get better, richer
             responses than ever before.
           </p>
-
-          <div className="mt-10 flex items-center justify-center gap-x-6">
-            <SignUpButton mode="modal">
-              <Button size="lg" className="group">
-                Start creating for free
-                <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-              </Button>
-            </SignUpButton>
-            <SignInButton mode="modal">
-              <Button variant="outline" size="lg">
-                Sign in
-              </Button>
-            </SignInButton>
-          </div>
         </div>
 
         {/* Floating Elements */}
